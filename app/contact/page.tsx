@@ -19,6 +19,7 @@ export default function ContactPage() {
   const [formData, setFormData] = useState({
     naam: "",
     email: "",
+    telefoon: "",
     websiteType: "",
     website: "",
     bericht: "",
@@ -177,6 +178,26 @@ export default function ContactPage() {
                         placeholder="jouw@email.nl"
                         value={formData.email}
                         onChange={handleChange}
+                        autoComplete="email"
+                        className="bg-secondary border-border/50 focus:border-primary !min-h-[44px] md:!min-h-9"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="telefoon" className="block text-sm font-medium mb-2">
+                        Telefoonnummer <span className="text-primary">*</span>
+                      </label>
+                      <Input
+                        id="telefoon"
+                        name="telefoon"
+                        type="tel"
+                        inputMode="tel"
+                        required
+                        maxLength={40}
+                        placeholder="+31 6 12345678"
+                        value={formData.telefoon}
+                        onChange={handleChange}
+                        autoComplete="tel"
                         className="bg-secondary border-border/50 focus:border-primary !min-h-[44px] md:!min-h-9"
                       />
                     </div>

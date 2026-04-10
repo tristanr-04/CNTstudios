@@ -40,6 +40,16 @@ export const contactFormSchema = z.object({
     .max(254)
     .transform((s) => sanitizeSingleLine(s.trim(), 254))
     .pipe(z.string().min(1, "E-mail is verplicht").email("Ongeldig e-mailadres").max(254)),
+  telefoon: z
+    .string()
+    .max(40)
+    .transform((s) => sanitizeSingleLine(s, 40))
+    .refine((s) => s.length > 0, "Telefoonnummer is verplicht")
+    .refine(
+      (s) => /^[0-9+()\s.\-]{8,40}$/.test(s),
+      "Gebruik alleen cijfers en gangbare tekens (+, spaties, haakjes)",
+    )
+    .refine((s) => (s.match(/\d/g) ?? []).length >= 8, "Voer een geldig nummer in (minimaal 8 cijfers)"),
   websiteType: websiteTypeEnum,
   website: websiteField,
   bericht: z.preprocess(

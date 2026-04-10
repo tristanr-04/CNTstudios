@@ -195,7 +195,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: msg }, { status: 400 })
   }
 
-  const { naam, email, websiteType, website, bericht, formHp } = parsed.data
+  const { naam, email, telefoon, websiteType, website, bericht, formHp } = parsed.data
 
   if (formHp.length > 0) {
     return NextResponse.json({ ok: true })
@@ -209,6 +209,7 @@ export async function POST(request: Request) {
     "",
     `Naam: ${naam}`,
     `E-mail: ${email}`,
+    `Telefoon: ${telefoon}`,
     `Type website: ${typeLabel}`,
     website ? `Website-URL: ${website}` : "Website-URL: (niet ingevuld)",
     "",
