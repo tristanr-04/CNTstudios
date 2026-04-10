@@ -77,8 +77,8 @@ export default function ContactPage() {
           <div className="max-w-3xl mx-auto text-center">
             <FadeIn>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] mb-6 text-balance">
-                Ontdek wat jouw website{" "}
-                <span className="text-gradient">je kost.</span>
+              Laten we jouw website{" "}
+                <span className="text-gradient">bouwen.</span>
               </h1>
             </FadeIn>
 
