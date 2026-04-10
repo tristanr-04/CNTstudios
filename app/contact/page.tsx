@@ -22,6 +22,7 @@ export default function ContactPage() {
     websiteType: "",
     website: "",
     bericht: "",
+    formHp: "",
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -128,6 +129,22 @@ export default function ContactPage() {
                       </p>
                     ) : null}
 
+                    <div
+                      className="absolute -left-[9999px] top-0 h-0 w-0 overflow-hidden opacity-0 pointer-events-none"
+                      aria-hidden="true"
+                    >
+                      <label htmlFor="formHp">Laat dit veld leeg</label>
+                      <input
+                        id="formHp"
+                        name="formHp"
+                        type="text"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        value={formData.formHp}
+                        onChange={handleChange}
+                      />
+                    </div>
+
                     <div>
                       <label htmlFor="naam" className="block text-sm font-medium mb-2">
                         Naam <span className="text-primary">*</span>
@@ -137,6 +154,7 @@ export default function ContactPage() {
                         name="naam"
                         type="text"
                         required
+                        maxLength={200}
                         placeholder="Jouw naam"
                         value={formData.naam}
                         onChange={handleChange}
@@ -153,6 +171,7 @@ export default function ContactPage() {
                         name="email"
                         type="email"
                         required
+                        maxLength={254}
                         placeholder="jouw@email.nl"
                         value={formData.email}
                         onChange={handleChange}
@@ -194,6 +213,7 @@ export default function ContactPage() {
                         id="website"
                         name="website"
                         type="url"
+                        maxLength={2048}
                         placeholder="https://jouwwebsite.nl"
                         value={formData.website}
                         onChange={handleChange}
@@ -209,6 +229,7 @@ export default function ContactPage() {
                         id="bericht"
                         name="bericht"
                         rows={4}
+                        maxLength={8000}
                         placeholder="Vertel ons meer over je website en wat je wilt bereiken..."
                         value={formData.bericht}
                         onChange={handleChange}

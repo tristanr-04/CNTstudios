@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server"
 import nodemailer from "nodemailer"
 import { SITE_CONTACT_EMAIL } from "@/lib/site-contact"
+import { contactFormSchema } from "@/lib/contact-schema"
+
+export const runtime = "nodejs"
 
 const WEBSITE_TYPE_LABELS: Record<string, string> = {
   geen: "Ik heb nog geen website",
   bestaand: "Ik heb al een website",
   verbeteren: "Ik wil mijn website verbeteren",
 }
+
+const MAX_BODY_BYTES = 48 * 1024
 
 function getTransporter() {
   const user = process.env.SMTP_USER
@@ -21,29 +26,76 @@ function getTransporter() {
   })
 }
 
+/** Als ALLOWED_ORIGINS is gezet: alleen die origins (komma-gescheiden, zonder trailing slash). */
+function originBlocked(request: Request): boolean {
+  const raw = process.env.ALLOWED_ORIGINS?.trim()
+  if (!raw) return false
+  const allowed = raw
+    .split(",")
+    .map((s) => s.trim().replace(/\/$/, ""))
+    .filter(Boolean)
+  if (allowed.length === 0) return false
+
+  const origin = request.headers.get("origin")
+  if (!origin) return true
+  const normalized = origin.replace(/\/$/, "")
+  return !allowed.some((a) => a === normalized)
+}
+
+export async function GET() {
+  return NextResponse.json({ error: "Method not allowed" }, { status: 405 })
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      Allow: "POST, OPTIONS",
+    },
+  })
+}
+
 export async function POST(request: Request) {
-  let body: {
-    naam?: string
-    email?: string
-    websiteType?: string
-    website?: string
-    bericht?: string
+  if (originBlocked(request)) {
+    return NextResponse.json({ error: "Ongeldige aanvraag" }, { status: 403 })
   }
 
+  let textBody: string
   try {
-    body = await request.json()
+    const buf = await request.arrayBuffer()
+    if (buf.byteLength > MAX_BODY_BYTES) {
+      return NextResponse.json({ error: "Aanvraag te groot" }, { status: 413 })
+    }
+    textBody = new TextDecoder("utf-8", { fatal: false }).decode(buf)
   } catch {
     return NextResponse.json({ error: "Ongeldige aanvraag" }, { status: 400 })
   }
 
-  const naam = String(body.naam ?? "").trim()
-  const email = String(body.email ?? "").trim()
-  const websiteType = String(body.websiteType ?? "").trim()
-  const website = String(body.website ?? "").trim()
-  const bericht = String(body.bericht ?? "").trim()
+  let json: unknown
+  try {
+    json = JSON.parse(textBody) as unknown
+  } catch {
+    return NextResponse.json({ error: "Ongeldige aanvraag" }, { status: 400 })
+  }
 
-  if (!naam || !email || !websiteType) {
-    return NextResponse.json({ error: "Vul alle verplichte velden in." }, { status: 400 })
+  if (!json || typeof json !== "object") {
+    return NextResponse.json({ error: "Ongeldige aanvraag" }, { status: 400 })
+  }
+
+  const parsed = contactFormSchema.safeParse(json)
+  if (!parsed.success) {
+    const flat = parsed.error.flatten()
+    const fieldMsg = Object.values(flat.fieldErrors)
+      .flat()
+      .find((m): m is string => Boolean(m))
+    const msg = fieldMsg ?? flat.formErrors[0] ?? "Ongeldige invoer"
+    return NextResponse.json({ error: msg }, { status: 400 })
+  }
+
+  const { naam, email, websiteType, website, bericht, formHp } = parsed.data
+
+  if (formHp.length > 0) {
+    return NextResponse.json({ ok: true })
   }
 
   const typeLabel = WEBSITE_TYPE_LABELS[websiteType] ?? websiteType
@@ -75,13 +127,14 @@ export async function POST(request: Request) {
   }
 
   const from = process.env.SMTP_FROM ?? `CNTstudios website <${process.env.SMTP_USER}>`
+  const safeSubject = naam.slice(0, 120)
 
   try {
     await transporter.sendMail({
       from,
       to,
       replyTo: email,
-      subject: `Gratis analyse: ${naam}`,
+      subject: `Gratis analyse: ${safeSubject}`,
       text,
     })
   } catch (err) {
