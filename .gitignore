@@ -1,0 +1,10 @@
+# Environment variables (nooit committen: wachtwoorden, SMTP, API-keys)
+.env
+.env*.local
+
+# Common ignores
+node_modules
+.next/
+.DS_Store
+.pnpm-store/
+*.tsbuildinfo
