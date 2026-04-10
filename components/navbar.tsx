@@ -126,38 +126,45 @@ export function Navbar() {
         </button>
       </nav>
 
-      {/* Mobile Navigation */}
+      {/* Mobile Navigation — gesloten: geen pointer-events op kinderen (anders klik je onzichtbare links) */}
       <div
         className={cn(
-          "lg:hidden fixed inset-0 z-40 transition-all duration-500",
-          isMobileMenuOpen 
-            ? "opacity-100 pointer-events-auto" 
-            : "opacity-0 pointer-events-none"
+          "lg:hidden fixed inset-0 z-[55] transition-all duration-500",
+          isMobileMenuOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none",
         )}
+        aria-hidden={!isMobileMenuOpen}
       >
-        {/* Backdrop */}
-        <div 
-          className="absolute inset-0 bg-background/95 backdrop-blur-xl"
+        {/* Backdrop: dekkend genoeg voor leesbare tekst op alle mobiele browsers */}
+        <div
+          className="absolute inset-0 bg-background backdrop-blur-xl"
           onClick={() => setIsMobileMenuOpen(false)}
         />
-        
+
         {/* Menu Content */}
         <div
           className={cn(
-            "relative h-full flex flex-col pt-24 pb-12 px-6 transition-all duration-500 pointer-events-none",
+            "relative z-[1] h-full flex flex-col pt-24 pb-12 px-6 transition-all duration-500 pointer-events-none",
             isMobileMenuOpen ? "translate-y-0" : "-translate-y-8",
           )}
         >
-          <div className="flex flex-col gap-2 pointer-events-auto">
+          <div
+            className={cn(
+              "flex flex-col gap-2",
+              isMobileMenuOpen ? "pointer-events-auto" : "pointer-events-none",
+            )}
+          >
             {navLinks.map((link, index) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsMobileMenuOpen(false)}
+                tabIndex={isMobileMenuOpen ? undefined : -1}
                 className={cn(
                   "text-3xl font-bold py-4 transition-all duration-300",
                   pathname === link.href
-                    ? "text-gradient-static"
+                    ? "text-primary"
                     : "text-muted-foreground hover:text-foreground",
                 )}
                 style={{
@@ -171,7 +178,12 @@ export function Navbar() {
             ))}
           </div>
           
-          <div className="mt-auto pointer-events-auto">
+          <div
+            className={cn(
+              "mt-auto",
+              isMobileMenuOpen ? "pointer-events-auto" : "pointer-events-none",
+            )}
+          >
             <Button 
               asChild 
               size="lg" 
