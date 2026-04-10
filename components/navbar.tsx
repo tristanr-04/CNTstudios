@@ -33,6 +33,15 @@ export function Navbar() {
     setIsMobileMenuOpen(false)
   }, [pathname])
 
+  useEffect(() => {
+    if (!isMobileMenuOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsMobileMenuOpen(false)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [isMobileMenuOpen])
+
   return (
     <header
       className={cn(
@@ -42,11 +51,12 @@ export function Navbar() {
           : "py-6 bg-transparent"
       )}
     >
-      <nav className="container mx-auto px-6 lg:px-8 flex items-center justify-between">
+      <nav className="container mx-auto px-6 lg:px-8 flex items-center justify-between relative z-[70]">
         {/* Logo */}
-        <Link 
-          href="/" 
+        <Link
+          href="/"
           className="flex items-center gap-2 group"
+          onClick={() => setIsMobileMenuOpen(false)}
         >
           <span className="text-2xl font-bold tracking-tight transition-colors duration-300">
             CNT<span className="text-gradient-static group-hover:text-primary transition-colors duration-300">studios</span>
@@ -132,11 +142,13 @@ export function Navbar() {
         />
         
         {/* Menu Content */}
-        <div className={cn(
-          "relative h-full flex flex-col pt-24 pb-12 px-6 transition-all duration-500",
-          isMobileMenuOpen ? "translate-y-0" : "-translate-y-8"
-        )}>
-          <div className="flex flex-col gap-2">
+        <div
+          className={cn(
+            "relative h-full flex flex-col pt-24 pb-12 px-6 transition-all duration-500 pointer-events-none",
+            isMobileMenuOpen ? "translate-y-0" : "-translate-y-8",
+          )}
+        >
+          <div className="flex flex-col gap-2 pointer-events-auto">
             {navLinks.map((link, index) => (
               <Link
                 key={link.href}
@@ -159,7 +171,7 @@ export function Navbar() {
             ))}
           </div>
           
-          <div className="mt-auto">
+          <div className="mt-auto pointer-events-auto">
             <Button 
               asChild 
               size="lg" 
