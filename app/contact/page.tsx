@@ -68,7 +68,7 @@ export default function ContactPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative pt-24 pb-12 md:pt-28 md:pb-14 overflow-hidden">
+      <section className="relative pt-24 pb-12 md:pt-28 md:pb-14 overflow-x-hidden overflow-y-visible">
         <GridBackground />
         <GlowOrb className="top-1/3 -left-32" size="lg" color="primary" />
         
@@ -91,12 +91,11 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Form Section */}
-      <Section className="pt-0">
+      <Section className="pt-0 pb-24 md:pb-16">
         <div className="grid lg:grid-cols-5 gap-12 lg:gap-16">
           {/* Form */}
-          <div className="lg:col-span-3">
-            <FadeIn>
-              <GlassCard className="glow-sm">
+          <div className="lg:col-span-3 relative z-10">
+            <GlassCard className="glow-sm" hover={false}>
                 {isSubmitted ? (
                   <div className="py-12 text-center">
                     <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/20 flex items-center justify-center">
@@ -113,7 +112,10 @@ export default function ContactPage() {
                     </Button>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form
+                    onSubmit={handleSubmit}
+                    className="space-y-6 touch-manipulation relative"
+                  >
                     <div className="space-y-2 pb-2 border-b border-border/40">
                       <p className="text-sm font-semibold text-foreground">
                         Binnen 24 uur persoonlijk contact
@@ -129,10 +131,7 @@ export default function ContactPage() {
                       </p>
                     ) : null}
 
-                    <div
-                      className="absolute -left-[9999px] top-0 h-0 w-0 overflow-hidden opacity-0 pointer-events-none"
-                      aria-hidden="true"
-                    >
+                    <div className="sr-only pointer-events-none" aria-hidden="true">
                       <label htmlFor="formHp">Laat dit veld leeg</label>
                       <input
                         id="formHp"
@@ -140,6 +139,9 @@ export default function ContactPage() {
                         type="text"
                         tabIndex={-1}
                         autoComplete="off"
+                        data-lpignore="true"
+                        data-1p-ignore
+                        data-form-type="other"
                         value={formData.formHp}
                         onChange={handleChange}
                       />
@@ -158,7 +160,7 @@ export default function ContactPage() {
                         placeholder="Jouw naam"
                         value={formData.naam}
                         onChange={handleChange}
-                        className="bg-secondary border-border/50 focus:border-primary"
+                        className="bg-secondary border-border/50 focus:border-primary !min-h-[44px] md:!min-h-9"
                       />
                     </div>
                     
@@ -175,7 +177,7 @@ export default function ContactPage() {
                         placeholder="jouw@email.nl"
                         value={formData.email}
                         onChange={handleChange}
-                        className="bg-secondary border-border/50 focus:border-primary"
+                        className="bg-secondary border-border/50 focus:border-primary !min-h-[44px] md:!min-h-9"
                       />
                     </div>
 
@@ -190,7 +192,7 @@ export default function ContactPage() {
                         value={formData.websiteType}
                         onChange={handleChange}
                         className={cn(
-                          "h-9 w-full rounded-md border bg-secondary px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm",
+                          "min-h-[44px] h-11 w-full rounded-md border bg-secondary px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none md:h-9 md:min-h-9 md:text-sm",
                           "border-border/50 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
                           "text-foreground",
                         )}
@@ -217,7 +219,7 @@ export default function ContactPage() {
                         placeholder="https://jouwwebsite.nl"
                         value={formData.website}
                         onChange={handleChange}
-                        className="bg-secondary border-border/50 focus:border-primary"
+                        className="bg-secondary border-border/50 focus:border-primary !min-h-[44px] md:!min-h-9"
                       />
                     </div>
                     
@@ -233,14 +235,14 @@ export default function ContactPage() {
                         placeholder="Vertel ons meer over je website en wat je wilt bereiken..."
                         value={formData.bericht}
                         onChange={handleChange}
-                        className="bg-secondary border-border/50 focus:border-primary resize-none"
+                        className="bg-secondary border-border/50 focus:border-primary resize-none min-h-[120px] text-base md:min-h-16 md:text-sm"
                       />
                     </div>
                     
                     <Button 
                       type="submit" 
                       size="lg" 
-                      className="w-full glow-primary hover:glow-accent transition-shadow"
+                      className="w-full min-h-[48px] glow-primary hover:glow-accent transition-shadow touch-manipulation"
                       disabled={isSubmitting}
                     >
                       {isSubmitting ? (
@@ -257,8 +259,7 @@ export default function ContactPage() {
                     </Button>
                   </form>
                 )}
-              </GlassCard>
-            </FadeIn>
+            </GlassCard>
           </div>
           
           {/* Sidebar */}

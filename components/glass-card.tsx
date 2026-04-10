@@ -31,9 +31,11 @@ export function GlassCard({
     <div
       className={cn(
         "relative glass rounded-2xl p-8 md:p-10 transition-all duration-500",
-        hover && "hover:border-primary/60 hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/10",
+        /* Geen translate op smalle schermen: iOS “sticky hover” + betere touch-targets */
+        hover &&
+          "hover:border-primary/60 md:hover:-translate-y-2 md:hover:shadow-2xl md:hover:shadow-primary/10",
         glow && "hover:glow-sm",
-        className
+        className,
       )}
     >
       {children}

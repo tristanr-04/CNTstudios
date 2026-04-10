@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <>
       {/* Hero Section - Ultra Premium */}
-      <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[100dvh] flex items-center justify-center overflow-x-hidden overflow-y-visible">
         {/* Background Effects */}
         <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background/95" />
         <GridBackground className="opacity-100" />

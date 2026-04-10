@@ -24,6 +24,22 @@ export function FadeIn({
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const showIfLikelyVisible = () => {
+      const rect = el.getBoundingClientRect()
+      const vh = window.innerHeight || document.documentElement.clientHeight
+      /* Direct zichtbaar bij load (hero): voorkomt lege pagina als IO op mobiel traag/hikt */
+      if (rect.top < vh * 0.92 && rect.bottom > -vh * 0.1) {
+        setIsVisible(true)
+        return true
+      }
+      return false
+    }
+
+    if (showIfLikelyVisible()) return
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -31,13 +47,10 @@ export function FadeIn({
           observer.unobserve(entry.target)
         }
       },
-      { threshold: 0.1, rootMargin: "50px" }
+      { threshold: 0.05, rootMargin: "80px 0px 120px 0px" },
     )
 
-    if (ref.current) {
-      observer.observe(ref.current)
-    }
-
+    observer.observe(el)
     return () => observer.disconnect()
   }, [])
 
@@ -288,6 +301,16 @@ export function MagneticButton({ children, className, strength = 0.3 }: Magnetic
   const rafRef = useRef<number | null>(null)
   const lastEvent = useRef<MouseEvent | null>(null)
   const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [coarsePointer, setCoarsePointer] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const mq = window.matchMedia("(pointer: coarse)")
+    const apply = () => setCoarsePointer(mq.matches)
+    apply()
+    mq.addEventListener("change", apply)
+    return () => mq.removeEventListener("change", apply)
+  }, [])
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     lastEvent.current = e
@@ -312,6 +335,10 @@ export function MagneticButton({ children, className, strength = 0.3 }: Magnetic
     }
     setPosition({ x: 0, y: 0 })
   }, [])
+
+  if (coarsePointer) {
+    return <div className={cn("inline-block touch-manipulation", className)}>{children}</div>
+  }
 
   return (
     <div

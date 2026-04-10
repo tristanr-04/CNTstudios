@@ -5,7 +5,9 @@ export function sanitizeSingleLine(input: string, max: number): string {
   return input.replace(/[\r\n\x00]/g, " ").slice(0, max).trim()
 }
 
-const websiteTypeEnum = z.enum(["geen", "bestaand", "verbeteren"])
+const websiteTypeEnum = z.enum(["geen", "bestaand", "verbeteren"], {
+  errorMap: () => ({ message: "Kies wat voor website je hebt." }),
+})
 
 const websiteField = z.preprocess(
   (v) => (v == null || v === "" ? "" : String(v).trim().slice(0, 2048)),

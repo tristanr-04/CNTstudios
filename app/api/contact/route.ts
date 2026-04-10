@@ -26,20 +26,93 @@ function getTransporter() {
   })
 }
 
-/** Als ALLOWED_ORIGINS is gezet: alleen die origins (komma-gescheiden, zonder trailing slash). */
-function originBlocked(request: Request): boolean {
+/** Zelfde site met of zonder www, case-insensitive host. */
+function originKeyFromUrlString(urlStr: string): string {
+  const trimmed = urlStr.trim().replace(/\/$/, "")
+  const withProto = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+  const u = new URL(withProto)
+  const host = u.hostname.toLowerCase().replace(/^www\./, "")
+  return `${u.protocol}//${host}`
+}
+
+function buildAllowedOriginKeys(): string[] {
   const raw = process.env.ALLOWED_ORIGINS?.trim()
-  if (!raw) return false
-  const allowed = raw
-    .split(",")
-    .map((s) => s.trim().replace(/\/$/, ""))
-    .filter(Boolean)
-  if (allowed.length === 0) return false
+  const keys = new Set<string>()
+  if (raw) {
+    for (const part of raw.split(",")) {
+      const t = part.trim()
+      if (!t) continue
+      try {
+        keys.add(originKeyFromUrlString(t))
+      } catch {
+        /* negeren */
+      }
+    }
+  }
+  const vercel = process.env.VERCEL_URL?.replace(/\/$/, "").replace(/^https?:\/\//, "")
+  if (vercel) {
+    try {
+      keys.add(originKeyFromUrlString(`https://${vercel}`))
+    } catch {
+      /* negeren */
+    }
+  }
+  return [...keys]
+}
+
+/** Alle bruikbare “site”-herkomsten van dit verzoek (Origin, Referer, Host). */
+function collectRequestOriginKeys(request: Request): string[] {
+  const keys = new Set<string>()
 
   const origin = request.headers.get("origin")
-  if (!origin) return true
-  const normalized = origin.replace(/\/$/, "")
-  return !allowed.some((a) => a === normalized)
+  if (origin) {
+    try {
+      keys.add(originKeyFromUrlString(origin))
+    } catch {
+      /* negeren */
+    }
+  }
+
+  const referer = request.headers.get("referer")
+  if (referer) {
+    try {
+      keys.add(originKeyFromUrlString(new URL(referer).origin))
+    } catch {
+      /* negeren */
+    }
+  }
+
+  const hostRaw =
+    request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ||
+    request.headers.get("host")?.split(",")[0]?.trim()
+  if (hostRaw) {
+    const hostname = hostRaw.split(":")[0]
+    const proto =
+      request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || "https"
+    try {
+      keys.add(originKeyFromUrlString(`${proto}://${hostname}`))
+    } catch {
+      /* negeren */
+    }
+  }
+
+  return [...keys]
+}
+
+/**
+ * Als ALLOWED_ORIGINS is gezet (productie): minstens één kandidaat moet matchen.
+ * www/non-www en hoofdletters worden genormaliseerd. VERCEL_URL wordt automatisch toegevoegd.
+ */
+function originBlocked(request: Request): boolean {
+  if (process.env.NODE_ENV === "development") return false
+
+  const allowed = buildAllowedOriginKeys()
+  if (allowed.length === 0) return false
+
+  const candidates = collectRequestOriginKeys(request)
+  if (candidates.length === 0) return true
+
+  return !candidates.some((c) => allowed.includes(c))
 }
 
 export async function GET() {
@@ -57,29 +130,51 @@ export async function OPTIONS() {
 
 export async function POST(request: Request) {
   if (originBlocked(request)) {
-    return NextResponse.json({ error: "Ongeldige aanvraag" }, { status: 403 })
+    return NextResponse.json(
+      {
+        error:
+          "De aanvraag wordt geweigerd door de beveiligingsinstellingen. Controleer in Vercel bij Environment Variables of ALLOWED_ORIGINS je domein bevat (https:// en eventueel www), of zet ALLOWED_ORIGINS tijdelijk leeg om te testen.",
+      },
+      { status: 403 },
+    )
   }
 
   let textBody: string
   try {
-    const buf = await request.arrayBuffer()
-    if (buf.byteLength > MAX_BODY_BYTES) {
-      return NextResponse.json({ error: "Aanvraag te groot" }, { status: 413 })
-    }
-    textBody = new TextDecoder("utf-8", { fatal: false }).decode(buf)
+    textBody = await request.text()
   } catch {
-    return NextResponse.json({ error: "Ongeldige aanvraag" }, { status: 400 })
+    return NextResponse.json(
+      { error: "Kon het formulier niet uitlezen. Vernieuw de pagina en probeer opnieuw." },
+      { status: 400 },
+    )
+  }
+
+  if (!textBody.trim()) {
+    return NextResponse.json(
+      { error: "Er werd geen data meegestuurd. Vernieuw de pagina en probeer opnieuw." },
+      { status: 400 },
+    )
+  }
+
+  if (textBody.length > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: "Aanvraag te groot" }, { status: 413 })
   }
 
   let json: unknown
   try {
     json = JSON.parse(textBody) as unknown
   } catch {
-    return NextResponse.json({ error: "Ongeldige aanvraag" }, { status: 400 })
+    return NextResponse.json(
+      { error: "Ongeldige data ontvangen. Vernieuw de pagina en probeer opnieuw." },
+      { status: 400 },
+    )
   }
 
-  if (!json || typeof json !== "object") {
-    return NextResponse.json({ error: "Ongeldige aanvraag" }, { status: 400 })
+  if (json === null || typeof json !== "object" || Array.isArray(json)) {
+    return NextResponse.json(
+      { error: "Verkeerd formulierformaat. Vernieuw de pagina en probeer opnieuw." },
+      { status: 400 },
+    )
   }
 
   const parsed = contactFormSchema.safeParse(json)
@@ -88,7 +183,7 @@ export async function POST(request: Request) {
     const fieldMsg = Object.values(flat.fieldErrors)
       .flat()
       .find((m): m is string => Boolean(m))
-    const msg = fieldMsg ?? flat.formErrors[0] ?? "Ongeldige invoer"
+    const msg = fieldMsg ?? flat.formErrors[0] ?? "Controleer de invoer en probeer opnieuw."
     return NextResponse.json({ error: msg }, { status: 400 })
   }
 

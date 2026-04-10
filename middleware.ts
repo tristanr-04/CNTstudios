@@ -49,6 +49,10 @@ function isRateLimited(ip: string): boolean {
 }
 
 export function middleware(request: NextRequest) {
+  if (process.env.NODE_ENV === "development") {
+    return NextResponse.next()
+  }
+
   if (request.method !== "POST") {
     return NextResponse.next()
   }
