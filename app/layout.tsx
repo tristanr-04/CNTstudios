@@ -33,7 +33,7 @@ export default function RootLayout({
     <html lang="nl" className="dark" data-scroll-behavior="smooth">
       <body className="font-sans antialiased" suppressHydrationWarning>
         <Navbar />
-        <main className="min-h-screen min-w-0 overflow-x-hidden">
+        <main className="min-h-screen min-w-0 overflow-x-clip">
           {children}
         </main>
         <Footer />

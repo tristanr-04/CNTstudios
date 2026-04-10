@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -65,37 +65,27 @@ export default function ContactPage() {
     }))
   }
 
-  /* Geen “rubber band” op mobiel waardoor de titel visueel weg trekt boven de pagina */
-  useEffect(() => {
-    const html = document.documentElement
-    const body = document.body
-    const prevHtml = html.style.overscrollBehaviorY
-    const prevBody = body.style.overscrollBehaviorY
-    html.style.overscrollBehaviorY = "none"
-    body.style.overscrollBehaviorY = "none"
-    return () => {
-      html.style.overscrollBehaviorY = prevHtml
-      body.style.overscrollBehaviorY = prevBody
-    }
-  }, [])
-
   return (
     <>
       {/* Hero */}
-      <section className="relative pt-24 pb-12 md:pt-28 md:pb-14 overflow-x-hidden overflow-y-visible touch-pan-y">
+      <section className="relative pt-24 pb-12 md:pt-28 md:pb-14 overflow-hidden">
         <GridBackground />
         <GlowOrb className="top-1/3 -left-32" size="lg" color="primary" />
         
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] mb-6 text-balance">
-              Ontdek wat jouw website{" "}
-              <span className="text-gradient">je kost.</span>
-            </h1>
+            <FadeIn>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] mb-6 text-balance">
+                Ontdek wat jouw website{" "}
+                <span className="text-gradient">je kost.</span>
+              </h1>
+            </FadeIn>
 
-            <p className="text-xl text-muted-foreground leading-relaxed text-pretty">
-              Vraag een gratis analyse aan en krijg inzicht in waar jouw website kansen laat liggen en hoe je dit kunt verbeteren.
-            </p>
+            <FadeIn delay={100}>
+              <p className="text-xl text-muted-foreground leading-relaxed text-pretty">
+                Vraag een gratis analyse aan en krijg inzicht in waar jouw website kansen laat liggen en hoe je dit kunt verbeteren.
+              </p>
+            </FadeIn>
           </div>
         </div>
       </section>

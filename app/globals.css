@@ -131,8 +131,7 @@
     scroll-behavior: smooth;
     min-height: 100%;
     max-width: 100%;
-    /* hidden i.p.v. clip: betere ondersteuning op oudere mobiele WebKit */
-    overflow-x: hidden;
+    overflow-x: clip;
     background: var(--background);
   }
 
@@ -140,10 +139,8 @@
     @apply text-foreground;
     min-height: 100dvh;
     max-width: 100%;
-    overflow-x: hidden;
+    overflow-x: clip;
     background: transparent;
-    /* Voorkomt horizontaal “verspringen” bij 100vw + scrollbalk op sommige mobiele browsers */
-    -webkit-overflow-scrolling: touch;
   }
 
   /* Subtiele ruimte-nevel + sterren (fixed, geen scroll-jank) */
@@ -236,19 +233,6 @@
     @apply bg-clip-text text-transparent;
     -webkit-background-clip: text;
     background-image: linear-gradient(135deg, var(--primary), var(--accent));
-  }
-
-  /* iOS/WebKit: gradient-tekst verdwijnt soms met clip; op smalle schermen vaste kleur */
-  @media (max-width: 1023px) {
-    .text-gradient,
-    .text-gradient-static {
-      background-image: none !important;
-      -webkit-text-fill-color: currentColor;
-      background-clip: border-box !important;
-      -webkit-background-clip: border-box !important;
-      color: var(--primary) !important;
-      animation: none !important;
-    }
   }
   
   @keyframes gradient-shift {
