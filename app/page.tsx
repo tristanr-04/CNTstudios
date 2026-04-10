@@ -340,7 +340,7 @@ export default function Home() {
             <TestimonialCard 
               quote="Onze conversie is met 67% gestegen sinds de redesign. Het team van CNTstudios begrijpt echt wat werkt."
               author="Martijn de Vries"
-              company="1 maand geleden"
+              company="1 week geleden"
             />
           </FadeIn>
           <FadeIn delay={100}>
@@ -354,7 +354,7 @@ export default function Home() {
             <TestimonialCard 
               quote="Professioneel, snel en resultaatgericht. CNTstudios levert precies wat ze beloven."
               author="Thomas Bakker"
-              company="1 week geleden"
+              company="1 maand geleden"
 
             />
           </FadeIn>
