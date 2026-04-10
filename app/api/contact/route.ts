@@ -35,12 +35,20 @@ function originKeyFromUrlString(urlStr: string): string {
   return `${u.protocol}//${host}`
 }
 
+function sanitizeOriginEnvPart(part: string): string {
+  return part
+    .trim()
+    .replace(/^["']|["']$/g, "")
+    .replace(/\u00a0/g, " ")
+    .trim()
+}
+
 function buildAllowedOriginKeys(): string[] {
   const raw = process.env.ALLOWED_ORIGINS?.trim()
   const keys = new Set<string>()
   if (raw) {
     for (const part of raw.split(",")) {
-      const t = part.trim()
+      const t = sanitizeOriginEnvPart(part)
       if (!t) continue
       try {
         keys.add(originKeyFromUrlString(t))
