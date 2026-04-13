@@ -64,6 +64,16 @@ async function portalGuard(request: NextRequest): Promise<NextResponse | null> {
   const { pathname } = request.nextUrl
   if (!pathname.startsWith("/portal/")) return null
 
+  /**
+   * /portal/[slug]/d moet eindigen op /d/ — anders lost de browser ./assets/ op naar
+   * /portal/[slug]/assets/ i.p.v. /portal/[slug]/d/assets/ → lege witte demo.
+   */
+  if (/^\/portal\/[^/]+\/d$/u.test(pathname)) {
+    const u = request.nextUrl.clone()
+    u.pathname = `${pathname}/`
+    return NextResponse.redirect(u, 308)
+  }
+
   /** Elke URL onder /portal/[slug]/… vereist dezelfde sessie (ook /d/ assets). */
   const underPortal = pathname.match(/^\/portal\/([^/]+)(?:\/|$)/)
   if (!underPortal) {

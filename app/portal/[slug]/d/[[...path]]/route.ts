@@ -30,6 +30,16 @@ const MIME: Record<string, string> = {
 
 const PRIVATE_CACHE = "private, no-store, no-cache, must-revalidate"
 
+/** Zorgt dat relatieve ./assets/ in subpaden blijft werken (ook als de URL ooit zonder / eindigt). */
+function injectDemoBaseHref(html: string, basePath: string): string {
+  if (/<base\s/i.test(html)) return html
+  const tag = `<base href="${basePath}" />`
+  if (/<head(\s[^>]*)?>/i.test(html)) {
+    return html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}${tag}`)
+  }
+  return `${tag}${html}`
+}
+
 type Ctx = { params: Promise<{ slug: string; path?: string[] }> }
 
 export async function GET(_request: Request, context: Ctx) {
@@ -57,7 +67,14 @@ export async function GET(_request: Request, context: Ctx) {
   const ext = path.extname(filePath).toLowerCase()
   const contentType = MIME[ext] ?? "application/octet-stream"
 
-  return new NextResponse(buf, {
+  let body: Buffer | Uint8Array = buf
+  if (ext === ".html" && segments.length === 0) {
+    const basePath = `/portal/${slug}/d/`
+    const html = injectDemoBaseHref(buf.toString("utf8"), basePath)
+    body = new TextEncoder().encode(html)
+  }
+
+  return new NextResponse(body, {
     status: 200,
     headers: {
       "Content-Type": contentType,
