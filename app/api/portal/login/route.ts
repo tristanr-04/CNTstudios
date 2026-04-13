@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import { cookies } from "next/headers"
 import bcrypt from "bcryptjs"
 import { findPortalUser, getPortalUsers } from "@/lib/portal-users"
 import { PORTAL_COOKIE_NAME, getPortalSessionSecret, signPortalJwt } from "@/lib/portal-jwt"
@@ -15,8 +14,23 @@ async function authFailedResponse() {
 }
 
 export async function POST(request: Request) {
-  if (!getPortalSessionSecret() || getPortalUsers().length === 0) {
-    return authFailedResponse()
+  if (!getPortalSessionSecret()) {
+    return NextResponse.json(
+      {
+        error:
+          "Portaal-secret ontbreekt of is te kort. Zet PORTAL_SESSION_SECRET in Vercel (min. 24 tekens) en deploy opnieuw.",
+      },
+      { status: 503 },
+    )
+  }
+  if (getPortalUsers().length === 0) {
+    return NextResponse.json(
+      {
+        error:
+          "Geen accounts geladen. Controleer PORTAL_USERS_JSON: één regel, geldige JSON-array, slug alleen kleine letters en streepjes (bijv. hair-xl). Bcrypt-hash moet het $-teken intact houden.",
+      },
+      { status: 503 },
+    )
   }
 
   let text: string
@@ -43,7 +57,6 @@ export async function POST(request: Request) {
   const o = body as Record<string, unknown>
   const username = typeof o.username === "string" ? o.username : ""
   const password = typeof o.password === "string" ? o.password : ""
-  const nextRaw = typeof o.next === "string" ? o.next : undefined
 
   if (!username.trim() || !password) {
     return NextResponse.json({ error: "Vul gebruikersnaam en wachtwoord in." }, { status: 400 })
@@ -56,14 +69,15 @@ export async function POST(request: Request) {
   }
 
   const token = await signPortalJwt(user.username, user.slug)
-  const jar = await cookies()
-  jar.set(PORTAL_COOKIE_NAME, token, {
+
+  /** response.cookies.set is betrouwbaarder dan cookies().set in sommige Next route handlers. */
+  const response = NextResponse.json({ ok: true, redirect: `/portal/${user.slug}` })
+  response.cookies.set(PORTAL_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   })
-
-  return NextResponse.json({ ok: true, redirect: `/portal/${user.slug}` })
+  return response
 }

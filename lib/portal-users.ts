@@ -18,12 +18,20 @@ function isPortalUserRow(x: unknown): x is PortalUserRow {
   )
 }
 
+function normalizeUsersJsonEnv(raw: string): string {
+  let t = raw.trim()
+  if (t.length >= 2 && ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'")))) {
+    t = t.slice(1, -1).replace(/\\"/g, '"').replace(/\\n/g, "")
+  }
+  return t.trim()
+}
+
 /** Accounts die jullie zelf beheren (Vercel: PORTAL_USERS_JSON). */
 export function getPortalUsers(): PortalUserRow[] {
   const raw = process.env.PORTAL_USERS_JSON?.trim()
   if (!raw) return []
   try {
-    const parsed = JSON.parse(raw) as unknown
+    const parsed = JSON.parse(normalizeUsersJsonEnv(raw)) as unknown
     if (!Array.isArray(parsed)) return []
     return parsed.filter(isPortalUserRow)
   } catch {
