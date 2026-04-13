@@ -38,12 +38,12 @@ export default async function PortalSlugPage({ params }: Props) {
   const demoBasePath = `/portal/${slug}/d`
 
   return (
-    <section className="relative min-h-[100dvh] overflow-hidden pt-28 pb-16 px-6">
+    <section className="relative min-h-[100dvh] overflow-x-hidden overflow-y-visible pt-28 pb-16 px-4 sm:px-6">
       <GridBackground />
       <GlowOrb className="top-1/3 -left-32" size="lg" color="accent" />
 
-      <div className="relative z-10 max-w-2xl mx-auto space-y-8">
-        <div className="text-center">
+      <div className="relative z-10 space-y-8">
+        <div className="max-w-2xl mx-auto text-center">
           <p className="text-sm text-muted-foreground mb-2">CNTstudios · klantenportaal</p>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
             Welkom,{" "}
@@ -57,30 +57,34 @@ export default async function PortalSlugPage({ params }: Props) {
         </div>
 
         {demoReady ? (
-          <div className="rounded-xl border border-border/60 bg-card/40 overflow-hidden glow-sm min-h-[min(75dvh,820px)]">
-            <iframe
-              title={`Demo ${slug}`}
-              src={demoBasePath}
-              className="w-full h-[min(75dvh,820px)] border-0 bg-background"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
-            />
+          <div className="w-full max-w-[min(100%,1600px)] mx-auto">
+            <div className="rounded-xl border border-border/60 bg-card/40 overflow-hidden glow-sm min-h-[min(70dvh,780px)] md:min-h-[min(75dvh,820px)]">
+              <iframe
+                title={`Demo ${slug}`}
+                src={demoBasePath}
+                className="w-full min-h-[min(70dvh,780px)] h-[min(75dvh,820px)] md:h-[min(78dvh,860px)] border-0 bg-background"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+              />
+            </div>
           </div>
         ) : (
-          <GlassCard hover={false} className="glow-sm">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              <strong className="text-foreground">Slug:</strong> <code className="text-primary">{slug}</code>
-              <br />
-              <span className="mt-2 block">
-                Map in het project: <code className="text-primary">demo/{slug}/</code> met een{" "}
-                <code className="text-primary">index.html</code>. Gebruik relatieve paden (bijv.{" "}
-                <code className="text-primary">./style.css</code>) zodat alles onder{" "}
-                <code className="text-primary">{demoBasePath}</code> blijft werken.
-              </span>
-            </p>
-          </GlassCard>
+          <div className="max-w-2xl mx-auto">
+            <GlassCard hover={false} className="glow-sm">
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                <strong className="text-foreground">Slug:</strong> <code className="text-primary">{slug}</code>
+                <br />
+                <span className="mt-2 block">
+                  Map in het project: <code className="text-primary">demo/{slug}/</code> met een{" "}
+                  <code className="text-primary">index.html</code>. Gebruik relatieve paden (bijv.{" "}
+                  <code className="text-primary">./style.css</code>) zodat alles onder{" "}
+                  <code className="text-primary">{demoBasePath}</code> blijft werken.
+                </span>
+              </p>
+            </GlassCard>
+          </div>
         )}
 
-        <div className="flex flex-wrap gap-3 justify-center">
+        <div className="max-w-2xl mx-auto flex flex-wrap gap-3 justify-center">
           <Button asChild variant="outline">
             <Link href="/">Naar website</Link>
           </Button>
