@@ -4,8 +4,17 @@ export const PORTAL_COOKIE_NAME = "cnt_portal"
 
 const ALG = "HS256"
 
+/**
+ * Dynamische env-naam voorkomt dat Turbopack/Webpack de waarde bij build naar ""
+ * inlijnt (Edge middleware kreeg dan geen secret terwijl Node wél redirect-loops gaf).
+ */
 export function getPortalSessionSecret(): string | null {
-  const s = process.env.PORTAL_SESSION_SECRET?.trim()
+  const key = ["PORTAL", "SESSION", "SECRET"].join("_")
+  const raw =
+    typeof process !== "undefined" && process.env != null
+      ? (process.env as Record<string, string | undefined>)[key]
+      : undefined
+  const s = raw?.trim()
   if (!s || s.length < 24) return null
   return s
 }

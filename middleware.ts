@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { PORTAL_COOKIE_NAME, verifyPortalJwt } from "@/lib/portal-jwt"
 
 /** Safari op iPhone cachet LAN-dev hard; oude HTML → oude /_next-chunks → “kapotte” site terwijl Chrome wél werkt. */
 const DEV_NO_CACHE =
@@ -10,6 +11,23 @@ function withDevNoCache(res: NextResponse): NextResponse {
     res.headers.set("Cache-Control", DEV_NO_CACHE)
   }
   return res
+}
+
+/** Voorkomt gedeelde / browser-cache van portal↔login redirects zonder rekening met cookies. */
+function noStorePortalRedirect(res: NextResponse): NextResponse {
+  res.headers.set(
+    "Cache-Control",
+    "private, no-store, no-cache, must-revalidate, max-age=0",
+  )
+  res.headers.set("Vary", "Cookie")
+  return res
+}
+
+function redirectToLogin(request: NextRequest, nextPath: string): NextResponse {
+  const login = request.nextUrl.clone()
+  login.pathname = "/login"
+  login.searchParams.set("next", nextPath.replace(/\/+$/, "") || nextPath)
+  return noStorePortalRedirect(withDevNoCache(NextResponse.redirect(login)))
 }
 
 const WINDOW_MS = 60_000
@@ -70,14 +88,33 @@ async function portalGuard(request: NextRequest): Promise<NextResponse | null> {
   if (/^\/portal\/[^/]+\/d$/u.test(pathname)) {
     const u = request.nextUrl.clone()
     u.pathname = `${pathname}/`
-    return NextResponse.redirect(u, 308)
+    return noStorePortalRedirect(NextResponse.redirect(u, 308))
   }
 
-  /**
-   * Portaal-auth gebeurt in Server Components + route handlers (Node), niet hier.
-   * Edge Middleware krijgt op Vercel soms geen PORTAL_SESSION_SECRET (build-time inlining),
-   * terwijl Node wél de secret heeft → oneindige redirect: /portal → /login → /portal.
-   */
+  const underPortal = pathname.match(/^\/portal\/([^/]+)(?:\/|$)/u)
+  if (!underPortal) {
+    return NextResponse.next()
+  }
+
+  const pathSlug = underPortal[1]
+  const nextLogin = pathname.replace(/\/+$/, "") || pathname
+
+  const token = request.cookies.get(PORTAL_COOKIE_NAME)?.value
+  if (!token) {
+    return redirectToLogin(request, nextLogin)
+  }
+
+  const session = await verifyPortalJwt(token)
+  if (!session) {
+    return redirectToLogin(request, nextLogin)
+  }
+
+  if (session.slug !== pathSlug) {
+    const u = request.nextUrl.clone()
+    u.pathname = `/portal/${session.slug}`
+    return noStorePortalRedirect(withDevNoCache(NextResponse.redirect(u)))
+  }
+
   return null
 }
 
