@@ -64,12 +64,13 @@ async function portalGuard(request: NextRequest): Promise<NextResponse | null> {
   const { pathname } = request.nextUrl
   if (!pathname.startsWith("/portal/")) return null
 
-  const single = pathname.match(/^\/portal\/([^/]+)\/?$/)
-  if (!single) {
+  /** Elke URL onder /portal/[slug]/… vereist dezelfde sessie (ook /d/ assets). */
+  const underPortal = pathname.match(/^\/portal\/([^/]+)(?:\/|$)/)
+  if (!underPortal) {
     return NextResponse.next()
   }
 
-  const pathSlug = single[1]
+  const pathSlug = underPortal[1]
   const secret = process.env.PORTAL_SESSION_SECRET?.trim()
   if (!secret || secret.length < 24) {
     const u = request.nextUrl.clone()

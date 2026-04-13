@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { getPortalSessionFromCookies } from "@/lib/portal-session"
+import { hasDemoSite } from "@/lib/demo-site"
 import { GlassCard } from "@/components/glass-card"
 import { GridBackground, GlowOrb } from "@/components/animated-elements"
 import { Button } from "@/components/ui/button"
@@ -24,6 +25,9 @@ export default async function PortalSlugPage({ params }: Props) {
     redirect(`/login?next=${encodeURIComponent(`/portal/${slug}`)}`)
   }
 
+  const demoReady = await hasDemoSite(slug)
+  const demoBasePath = `/portal/${slug}/d/`
+
   return (
     <section className="relative min-h-[100dvh] overflow-hidden pt-28 pb-16 px-6">
       <GridBackground />
@@ -37,20 +41,35 @@ export default async function PortalSlugPage({ params }: Props) {
             <span className="text-gradient-static">{session.username}</span>
           </h1>
           <p className="mt-3 text-muted-foreground">
-            Dit is jouw testomgeving. Hier komt straks je testwebsite of preview — die kunnen we
-            koppelen aan een eigen URL of embed.
+            {demoReady
+              ? "Hieronder staat jouw demo. Alleen ingelogd met jouw account is deze te bekijken."
+              : `Dit is jouw testomgeving. Zet bestanden in de map demo/${slug}/ (o.a. index.html) om hier een preview te tonen.`}
           </p>
         </div>
 
-        <GlassCard hover={false} className="glow-sm">
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            <strong className="text-foreground">Slug:</strong> <code className="text-primary">{slug}</code>
-            <br />
-            <span className="mt-2 block">
-              Nog geen live preview? Neem contact op, dan zetten we jouw demo hier neer.
-            </span>
-          </p>
-        </GlassCard>
+        {demoReady ? (
+          <div className="rounded-xl border border-border/60 bg-card/40 overflow-hidden glow-sm min-h-[min(75dvh,820px)]">
+            <iframe
+              title={`Demo ${slug}`}
+              src={demoBasePath}
+              className="w-full h-[min(75dvh,820px)] border-0 bg-background"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+            />
+          </div>
+        ) : (
+          <GlassCard hover={false} className="glow-sm">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              <strong className="text-foreground">Slug:</strong> <code className="text-primary">{slug}</code>
+              <br />
+              <span className="mt-2 block">
+                Map in het project: <code className="text-primary">demo/{slug}/</code> met een{" "}
+                <code className="text-primary">index.html</code>. Gebruik relatieve paden (bijv.{" "}
+                <code className="text-primary">./style.css</code>) zodat alles onder{" "}
+                <code className="text-primary">{demoBasePath}</code> blijft werken.
+              </span>
+            </p>
+          </GlassCard>
+        )}
 
         <div className="flex flex-wrap gap-3 justify-center">
           <Button asChild variant="outline">

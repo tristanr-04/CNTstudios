@@ -62,6 +62,11 @@ const nextConfig = {
   ...(!isProd && allowedDevOrigins.length > 0
     ? { allowedDevOrigins }
     : {}),
+  /** Zorgt dat demo-bestanden op Vercel in de serverless bundle zitten (fs.readFile). */
+  outputFileTracingIncludes: {
+    "/portal/[slug]/d/[[...path]]": ["./demo/**/*"],
+    "/portal/[slug]": ["./demo/**/*"],
+  },
   images: {
     qualities: [75, 100],
   },
