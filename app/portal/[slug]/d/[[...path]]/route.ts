@@ -4,6 +4,7 @@ import path from "path"
 import { cookies } from "next/headers"
 import { PORTAL_COOKIE_NAME, verifyPortalJwt } from "@/lib/portal-jwt"
 import { resolveDemoPublicFile } from "@/lib/demo-site"
+import { rewriteDemoRootAbsoluteAssets } from "@/lib/demo-embed-rewrite"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -69,10 +70,13 @@ export async function GET(_request: Request, context: Ctx) {
   const contentType = MIME[ext] ?? "application/octet-stream"
 
   let body: Buffer | Uint8Array = buf
+  const utf8 = buf.toString("utf8")
+
   if (ext === ".html" && segments.length === 0) {
     const basePath = `/portal/${slug}/d/`
-    const html = injectDemoBaseHref(buf.toString("utf8"), basePath)
-    body = new TextEncoder().encode(html)
+    body = new TextEncoder().encode(injectDemoBaseHref(utf8, basePath))
+  } else if (ext === ".css" || ext === ".js" || ext === ".mjs") {
+    body = new TextEncoder().encode(rewriteDemoRootAbsoluteAssets(utf8))
   }
 
   return new NextResponse(body, {
