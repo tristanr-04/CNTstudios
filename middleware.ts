@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { PORTAL_COOKIE_NAME, verifyPortalJwt } from "@/lib/portal-jwt"
 
 /** Safari op iPhone cachet LAN-dev hard; oude HTML → oude /_next-chunks → “kapotte” site terwijl Chrome wél werkt. */
 const DEV_NO_CACHE =
@@ -74,44 +73,11 @@ async function portalGuard(request: NextRequest): Promise<NextResponse | null> {
     return NextResponse.redirect(u, 308)
   }
 
-  /** Elke URL onder /portal/[slug]/… vereist dezelfde sessie (ook /d/ assets). */
-  const underPortal = pathname.match(/^\/portal\/([^/]+)(?:\/|$)/)
-  if (!underPortal) {
-    return NextResponse.next()
-  }
-
-  const pathSlug = underPortal[1]
-  const secret = process.env.PORTAL_SESSION_SECRET?.trim()
-  if (!secret || secret.length < 24) {
-    const u = request.nextUrl.clone()
-    u.pathname = "/login"
-    return withDevNoCache(NextResponse.redirect(u))
-  }
-
-  const nextLogin = pathname.replace(/\/+$/, "") || pathname
-
-  const token = request.cookies.get(PORTAL_COOKIE_NAME)?.value
-  if (!token) {
-    const login = request.nextUrl.clone()
-    login.pathname = "/login"
-    login.searchParams.set("next", nextLogin)
-    return withDevNoCache(NextResponse.redirect(login))
-  }
-
-  const session = await verifyPortalJwt(token)
-  if (!session) {
-    const login = request.nextUrl.clone()
-    login.pathname = "/login"
-    login.searchParams.set("next", nextLogin)
-    return withDevNoCache(NextResponse.redirect(login))
-  }
-
-  if (session.slug !== pathSlug) {
-    const u = request.nextUrl.clone()
-    u.pathname = `/portal/${session.slug}`
-    return withDevNoCache(NextResponse.redirect(u))
-  }
-
+  /**
+   * Portaal-auth gebeurt in Server Components + route handlers (Node), niet hier.
+   * Edge Middleware krijgt op Vercel soms geen PORTAL_SESSION_SECRET (build-time inlining),
+   * terwijl Node wél de secret heeft → oneindige redirect: /portal → /login → /portal.
+   */
   return null
 }
 

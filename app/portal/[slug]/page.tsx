@@ -21,8 +21,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PortalSlugPage({ params }: Props) {
   const { slug } = await params
   const session = await getPortalSessionFromCookies()
-  if (!session || session.slug !== slug) {
+  if (!session) {
     redirect(`/login?next=${encodeURIComponent(`/portal/${slug}`)}`)
+  }
+  if (session.slug !== slug) {
+    redirect(`/portal/${session.slug}`)
   }
 
   const demoReady = await hasDemoSite(slug)
