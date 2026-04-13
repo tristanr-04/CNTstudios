@@ -82,14 +82,10 @@ async function portalGuard(request: NextRequest): Promise<NextResponse | null> {
   if (!pathname.startsWith("/portal/")) return null
 
   /**
-   * /portal/[slug]/d moet eindigen op /d/ — anders lost de browser ./assets/ op naar
-   * /portal/[slug]/assets/ i.p.v. /portal/[slug]/d/assets/ → lege witte demo.
+   * Geen 308 /d → /d/ hier: Next.js (trailingSlash: false) stuurt /d/ juist terug naar /d,
+   * wat een oneindige redirect-loop geeft — vooral in het iframe. Relatieve assets lossen we
+   * op met <base href=".../d/"> in de demo-route.
    */
-  if (/^\/portal\/[^/]+\/d$/u.test(pathname)) {
-    const u = request.nextUrl.clone()
-    u.pathname = `${pathname}/`
-    return noStorePortalRedirect(NextResponse.redirect(u, 308))
-  }
 
   const underPortal = pathname.match(/^\/portal\/([^/]+)(?:\/|$)/u)
   if (!underPortal) {

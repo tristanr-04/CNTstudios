@@ -34,7 +34,8 @@ export default async function PortalSlugPage({ params }: Props) {
   }
 
   const demoReady = await hasDemoSite(slug)
-  const demoBasePath = `/portal/${slug}/d/`
+  /** Zonder slash aan het eind: voorkomt 308-strijd met Next trailingSlash-default. */
+  const demoBasePath = `/portal/${slug}/d`
 
   return (
     <section className="relative min-h-[100dvh] overflow-hidden pt-28 pb-16 px-6">
