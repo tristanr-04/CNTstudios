@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { unstable_noStore as noStore } from "next/cache"
 import { redirect } from "next/navigation"
 import { getPortalSessionFromCookies } from "@/lib/portal-session"
 import { hasDemoSite } from "@/lib/demo-site"
@@ -10,6 +11,9 @@ import { LogOut } from "lucide-react"
 
 type Props = { params: Promise<{ slug: string }> }
 
+/** Geen cache op URL alleen: anders CDN “redirect ↔ portal”-loops met/out cookie. */
+export const dynamic = "force-dynamic"
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   return {
@@ -19,6 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PortalSlugPage({ params }: Props) {
+  noStore()
   const { slug } = await params
   const session = await getPortalSessionFromCookies()
   if (!session) {

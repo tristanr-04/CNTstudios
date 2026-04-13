@@ -6,6 +6,7 @@ import { PORTAL_COOKIE_NAME, verifyPortalJwt } from "@/lib/portal-jwt"
 import { resolveDemoPublicFile } from "@/lib/demo-site"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",

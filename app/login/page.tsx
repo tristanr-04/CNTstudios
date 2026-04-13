@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { unstable_noStore as noStore } from "next/cache"
 import { redirect } from "next/navigation"
 import { getPortalSessionFromCookies } from "@/lib/portal-session"
 import { sanitizePortalNextParam } from "@/lib/portal-redirect"
@@ -12,7 +13,10 @@ export const metadata: Metadata = {
 
 type SearchParams = Promise<{ next?: string }>
 
+export const dynamic = "force-dynamic"
+
 export default async function LoginPage({ searchParams }: { searchParams: SearchParams }) {
+  noStore()
   const sp = await searchParams
   const session = await getPortalSessionFromCookies()
   if (session) {

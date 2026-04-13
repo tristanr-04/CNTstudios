@@ -71,10 +71,25 @@ const nextConfig = {
     qualities: [75, 100],
   },
   async headers() {
+    const noStorePortalLogin = [
+      {
+        key: "Cache-Control",
+        value: "private, no-store, no-cache, must-revalidate, max-age=0",
+      },
+      { key: "Vary", value: "Cookie" },
+    ]
     return [
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/portal/:path*",
+        headers: noStorePortalLogin,
+      },
+      {
+        source: "/login",
+        headers: noStorePortalLogin,
       },
     ]
   },
