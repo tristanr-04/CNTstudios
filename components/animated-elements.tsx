@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { ReactNode, useEffect, useRef, useState, useCallback } from "react"
+import { ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 
 interface FadeInProps {
   children: ReactNode
@@ -12,71 +12,117 @@ interface FadeInProps {
   duration?: number
 }
 
-export function FadeIn({ 
-  children, 
-  className, 
+export function FadeIn({
+  children,
+  className,
   delay = 0,
   direction = "up",
   distance = 40,
-  duration = 800
+  duration = 800,
 }: FadeInProps) {
   const [isVisible, setIsVisible] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setIsVisible(true)
+    }
+  }, [])
+
   useEffect(() => {
+    if (typeof window === "undefined") return
     const el = ref.current
     if (!el) return
 
-    const showIfLikelyVisible = () => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return
+    }
+
+    const tryReveal = () => {
       const rect = el.getBoundingClientRect()
       const vh = window.innerHeight || document.documentElement.clientHeight
-      /* Direct zichtbaar bij load (hero): voorkomt lege pagina als IO op mobiel traag/hikt */
-      if (rect.top < vh * 0.92 && rect.bottom > -vh * 0.1) {
+      if (rect.top < vh * 0.99 && rect.bottom > -vh * 0.35) {
         setIsVisible(true)
         return true
       }
       return false
     }
 
-    if (showIfLikelyVisible()) return
+    if (tryReveal()) return
+
+    const raf = requestAnimationFrame(() => {
+      tryReveal()
+    })
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry?.isIntersecting) {
           setIsVisible(true)
-          observer.unobserve(entry.target)
+          observer.disconnect()
         }
       },
-      { threshold: 0.05, rootMargin: "80px 0px 120px 0px" },
+      { threshold: 0.01, rootMargin: "140px 0px 180px 0px" },
     )
-
     observer.observe(el)
-    return () => observer.disconnect()
+
+    const bump = () => {
+      if (tryReveal()) observer.disconnect()
+    }
+    window.addEventListener("resize", bump, { passive: true })
+    const vv = window.visualViewport
+    vv?.addEventListener("resize", bump, { passive: true })
+
+    const fallback = window.setTimeout(() => setIsVisible(true), 2800)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      observer.disconnect()
+      window.removeEventListener("resize", bump)
+      vv?.removeEventListener("resize", bump)
+      window.clearTimeout(fallback)
+    }
   }, [])
 
   const getTransform = () => {
     if (isVisible) return "translate3d(0, 0, 0)"
     switch (direction) {
-      case "up": return `translate3d(0, ${distance}px, 0)`
-      case "down": return `translate3d(0, -${distance}px, 0)`
-      case "left": return `translate3d(${distance}px, 0, 0)`
-      case "right": return `translate3d(-${distance}px, 0, 0)`
-      default: return "translate3d(0, 0, 0)"
+      case "up":
+        return `translate3d(0, ${distance}px, 0)`
+      case "down":
+        return `translate3d(0, -${distance}px, 0)`
+      case "left":
+        return `translate3d(${distance}px, 0, 0)`
+      case "right":
+        return `translate3d(-${distance}px, 0, 0)`
+      default:
+        return "translate3d(0, 0, 0)"
     }
   }
 
+  const ease = "cubic-bezier(0.16, 1, 0.3, 1)"
+
+  /* Opacity op buitenste div, transform op binnenste: voorkomt iOS/WebKit waar
+   * bg-clip-text (text-gradient) onzichtbaar wordt met transform+opacity op dezelfde laag. */
   return (
     <div
       ref={ref}
       className={cn(className)}
       style={{
         opacity: isVisible ? 1 : 0,
-        transform: getTransform(),
-        transition: `opacity ${duration}ms cubic-bezier(0.16, 1, 0.3, 1), transform ${duration}ms cubic-bezier(0.16, 1, 0.3, 1)`,
+        transition: `opacity ${duration}ms ${ease}`,
         transitionDelay: `${delay}ms`,
       }}
     >
-      {children}
+      <div
+        style={{
+          transform: getTransform(),
+          transition: `transform ${duration}ms ${ease}`,
+          transitionDelay: `${delay}ms`,
+        }}
+      >
+        {children}
+      </div>
     </div>
   )
 }
