@@ -55,16 +55,23 @@ export async function POST(request: Request) {
   }
 
   const o = body as Record<string, unknown>
-  const username = typeof o.username === "string" ? o.username : ""
-  const password = typeof o.password === "string" ? o.password : ""
+  const usernameRaw = typeof o.username === "string" ? o.username : ""
+  const passwordRaw = typeof o.password === "string" ? o.password : ""
+  const username = usernameRaw.normalize("NFKC").trim()
+  const password = passwordRaw.normalize("NFKC").trim()
 
-  if (!username.trim() || !password) {
+  if (!username || !password) {
     return NextResponse.json({ error: "Vul gebruikersnaam en wachtwoord in." }, { status: 400 })
   }
 
   const user = findPortalUser(username)
   const ok = user ? await bcrypt.compare(password, user.passwordHash) : false
   if (!user || !ok) {
+    console.warn("portal login failed", {
+      usernameTried: username.toLowerCase(),
+      userFound: Boolean(user),
+      usersLoaded: getPortalUsers().map((u) => u.username.toLowerCase()),
+    })
     return authFailedResponse()
   }
 
